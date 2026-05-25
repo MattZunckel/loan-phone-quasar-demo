@@ -1,0 +1,65 @@
+body {
+  background: #fffbeb;
+}
+
+.application-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fef3c7 0%, #fffbeb 38%, #ffffff 100%);
+}
+
+.mobile-card {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  border-radius: 24px;
+}
+
+.q-toolbar__title {
+  min-width: 0;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.label-muted {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.value-strong {
+  color: #0f172a;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.q-btn.bg-primary {
+  color: #111827 !important;
+}
+
+.q-stepper__tab--active .q-stepper__dot,
+.q-stepper__tab--done .q-stepper__dot {
+  color: #111827;
+}
+
+@media (max-width: 420px) {
+  .summary-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .value-strong {
+    text-align: left;
+  }
+}
