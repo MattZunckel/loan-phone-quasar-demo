@@ -9,7 +9,7 @@ Mobile-first Quasar + Vue + Supabase demo for a phone loan application flow.
 - Age eligibility: 18 to 65 inclusive
 - Internal age-based pricing group; not shown to customer
 - Step 2: Income and income-proof upload
-- Step 3: Eligible phone dropdown based on income >= 10x monthly eligibility price
+- Step 3: Eligible phone dropdown based on income >= 10x calculated monthly repayment
 - Step 4: Daily repayment only: total loan amount / 365
 - Step 5: Terms acceptance and mock checkout
 - Supabase Postgres storage for in-progress and completed applications
@@ -22,6 +22,7 @@ Mobile-first Quasar + Vue + Supabase demo for a phone loan application flow.
 - In-progress applications use statuses such as `identity_submitted`, `income_submitted`, `phone_selected`, and `terms_accepted`.
 - Completed applications use status `completed` and store `completed_at`.
 - Phone catalogue and risk pricing live in Supabase tables so they can be edited without changing the app code.
+- Phone eligibility uses the applicant's risk pricing: `(loan_amount / 12) * 10 <= monthly_income`.
 - The total loan formula is deliberately isolated in `src/utils/pricing.js` because the final formula is still pending.
 
 ## Local setup

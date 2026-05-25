@@ -276,17 +276,29 @@ const currentPricing = computed(() => {
 
 const eligiblePhones = computed(() => {
   const monthlyIncome = Number(income.monthlyIncome || 0)
+  const pricing = currentPricing.value
+  if (!pricing) return []
+
   return phones.value.filter(phone => {
-    const monthlyEligibilityPrice = Number(phone.eligibility_monthly_price || 0)
-    return phone.active && monthlyEligibilityPrice > 0 && monthlyIncome >= monthlyEligibilityPrice * 10
+    if (!phone.active) return false
+
+    const result = calculatePricing({ phone, pricing })
+    const monthlyRepayment = result.loanAmount / 12
+    return monthlyRepayment > 0 && monthlyIncome >= monthlyRepayment * 10
   })
 })
 
 const phoneOptions = computed(() => {
-  return eligiblePhones.value.map(phone => ({
-    label: `${phone.name} - cash price ${money(phone.cash_price)}`,
-    value: phone.id
-  }))
+  const pricing = currentPricing.value
+  if (!pricing) return []
+
+  return eligiblePhones.value.map(phone => {
+    const result = calculatePricing({ phone, pricing })
+    return {
+      label: `${phone.name} - cash price ${money(phone.cash_price)} - daily ${money(result.dailyRepayment)}`,
+      value: phone.id
+    }
+  })
 })
 
 const selectedPhone = computed(() => {
