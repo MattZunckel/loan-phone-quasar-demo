@@ -1,6 +1,3 @@
--- Run this in Supabase SQL Editor.
--- Demo schema for Quasar/Vue phone loan application.
-
 create extension if not exists pgcrypto;
 
 create table if not exists public.phones (
@@ -184,7 +181,6 @@ create trigger trg_applications_updated_at
 before update on public.applications
 for each row execute function public.set_updated_at();
 
--- Prevent changing identity/pricing-group fields after initial submission.
 create or replace function public.lock_application_identity_fields()
 returns trigger as $$
 begin
@@ -203,7 +199,6 @@ create trigger trg_lock_application_identity_fields
 before update on public.applications
 for each row execute function public.lock_application_identity_fields();
 
--- Reference pricing. Replace these demo values with your real pricing.
 insert into public.risk_pricing (risk_group, min_age, max_age, deposit_percent, annual_interest_rate, active)
 values
   ('risk_1', 18, 30, 20.00, 35.00, true),
@@ -216,18 +211,54 @@ on conflict (risk_group) do update set
   annual_interest_rate = excluded.annual_interest_rate,
   active = excluded.active;
 
--- Demo phone catalogue. Change this in Supabase table editor.
+-- Current demo phone catalogue.
 insert into public.phones (name, cash_price, eligibility_monthly_price, active)
-values
-  ('Samsung Galaxy A05', 2499.00, 220.00, true),
-  ('Samsung Galaxy A15', 3999.00, 350.00, true),
-  ('Xiaomi Redmi 13C', 3299.00, 300.00, true),
-  ('Honor X7b', 5999.00, 525.00, true),
-  ('Samsung Galaxy A25', 6999.00, 625.00, true),
-  ('iPhone 11 Pre-Owned', 8999.00, 800.00, true)
-on conflict do nothing;
+select name, cash_price, eligibility_monthly_price, active
+from (
+  values
+    ('Xiaomi Redmi A3 Midnight Black', 999.00, 50.00, true),
+    ('Xiaomi Redmi A3x Midnight Black', 1399.00, 70.00, true),
+    ('Motorola E15 64GB Dual SIM', 1499.00, 75.00, true),
+    ('Honor X5B 64GB Midnight Black', 1499.00, 75.00, true),
+    ('OPPO A6X Plum Purple', 1699.00, 85.00, true),
+    ('Samsung Galaxy A06 Blue Black', 1799.00, 90.00, true),
+    ('Xiaomi Redmi A5 128GB Midnight Black', 1999.00, 100.00, true),
+    ('Honor X5B Plus 128GB Midnight Black', 1999.00, 100.00, true),
+    ('Motorola G06 Power', 2199.00, 110.00, true),
+    ('Xiaomi Redmi 15C 128GB Midnight Black', 2199.00, 110.00, true),
+    ('Samsung Galaxy A07 128GB Dual SIM', 2499.00, 125.00, true),
+    ('Samsung Galaxy A16 128GB Black', 2799.00, 140.00, true),
+    ('Samsung Galaxy A26 5G 128GB Dual SIM', 4999.00, 250.00, true)
+) as new_phones(name, cash_price, eligibility_monthly_price, active)
+where not exists (
+  select 1
+  from public.phones existing
+  where existing.name = new_phones.name
+);
 
--- Storage bucket for income documents. Private bucket.
+update public.phones existing
+set
+  cash_price = new_phones.cash_price,
+  eligibility_monthly_price = new_phones.eligibility_monthly_price,
+  active = new_phones.active
+from (
+  values
+    ('Xiaomi Redmi A3 Midnight Black', 999.00, 50.00, true),
+    ('Xiaomi Redmi A3x Midnight Black', 1399.00, 70.00, true),
+    ('Motorola E15 64GB Dual SIM', 1499.00, 75.00, true),
+    ('Honor X5B 64GB Midnight Black', 1499.00, 75.00, true),
+    ('OPPO A6X Plum Purple', 1699.00, 85.00, true),
+    ('Samsung Galaxy A06 Blue Black', 1799.00, 90.00, true),
+    ('Xiaomi Redmi A5 128GB Midnight Black', 1999.00, 100.00, true),
+    ('Honor X5B Plus 128GB Midnight Black', 1999.00, 100.00, true),
+    ('Motorola G06 Power', 2199.00, 110.00, true),
+    ('Xiaomi Redmi 15C 128GB Midnight Black', 2199.00, 110.00, true),
+    ('Samsung Galaxy A07 128GB Dual SIM', 2499.00, 125.00, true),
+    ('Samsung Galaxy A16 128GB Black', 2799.00, 140.00, true),
+    ('Samsung Galaxy A26 5G 128GB Dual SIM', 4999.00, 250.00, true)
+) as new_phones(name, cash_price, eligibility_monthly_price, active)
+where existing.name = new_phones.name;
+
 insert into storage.buckets (id, name, public)
 values ('income-documents', 'income-documents', false)
 on conflict (id) do nothing;
@@ -242,9 +273,7 @@ grant select on public.phones to anon, authenticated;
 grant select on public.risk_pricing to anon, authenticated;
 grant select, insert, update on public.applications to anon, authenticated;
 grant insert on public.application_events to anon, authenticated;
-
--- Public demo policies. These are intentionally simple for a live demo without login.
--- For production, replace anonymous policies with authenticated users or server-side API routes.
+grant insert on storage.objects to anon, authenticated;
 
 drop policy if exists "Anyone can read active phones" on public.phones;
 create policy "Anyone can read active phones"
@@ -283,13 +312,8 @@ on public.application_events for insert
 to public
 with check (true);
 
--- Storage policies for demo uploads.
-grant insert on storage.objects to anon, authenticated;
-
 drop policy if exists "Anyone can upload income documents" on storage.objects;
 create policy "Anyone can upload income documents"
 on storage.objects for insert
 to public
 with check (bucket_id = 'income-documents');
-
--- Keep reads private from the frontend by default. View documents from Supabase dashboard/admin tooling.
