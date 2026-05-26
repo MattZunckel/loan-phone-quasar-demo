@@ -16,8 +16,9 @@ export function calculatePricing({ phone, pricing }) {
   const depositAmount = cashPrice * (depositPercent / 100)
   const loanPrincipal = cashPrice * (1 - depositPercent / 100)
 
-  const loanAmount = loanPrincipal * (1 + annualInterestRate / 100)
-  const dailyRepayment = loanAmount / termDays
+  const rawLoanAmount = loanPrincipal * (1 + annualInterestRate / 100)
+  const dailyRepayment = Math.round((rawLoanAmount / termDays) * 100) / 100
+  const loanAmount = dailyRepayment * termDays
   const totalCustomerCost = depositAmount + loanAmount
 
   return {
