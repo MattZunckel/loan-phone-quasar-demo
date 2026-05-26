@@ -146,6 +146,10 @@
                     <span class="value-strong">{{ money(pricingResult.loanAmount) }}</span>
                   </div>
                   <div class="summary-row">
+                    <span class="label-muted">Loan term</span>
+                    <span class="value-strong">{{ pricingResult.termDays }} days</span>
+                  </div>
+                  <div class="summary-row">
                     <span class="label-muted">Daily repayment</span>
                     <span class="value-strong text-amber-9 text-h6">{{ money(pricingResult.dailyRepayment) }}</span>
                   </div>
@@ -166,12 +170,12 @@
             <q-step :name="4" title="Accept terms" icon="task_alt" :done="step > 4" :disable="!phoneSelectionSubmitted">
               <div class="q-gutter-md">
                 <q-banner class="bg-amber-1 text-amber-10 rounded-borders">
-                  Please confirm that you understand the daily repayment amount and accept the loan terms.
+                  Please confirm that you understand the daily repayment amount over a {{ pricingResult?.termDays || 360 }} day loan term and accept the loan terms.
                 </q-banner>
 
                 <q-checkbox
                   v-model="termsAccepted"
-                  label="I accept the loan terms and understand that payment is based on the daily repayment shown above."
+                  label="I accept the loan terms and understand that payment is based on the daily repayment shown above for a 360 day loan term."
                 />
 
                 <q-btn
@@ -369,6 +373,19 @@ async function updateApplication(values) {
   if (!data?.id) throw new Error('Application update did not persist.')
 }
 
+async function hasCompletedLoanForId(idNumber) {
+  const { data, error } = await supabase
+    .from('applications')
+    .select('id')
+    .eq('id_number', idNumber)
+    .eq('status', 'completed')
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw error
+  return Boolean(data?.id)
+}
+
 async function submitIdentity() {
   identityError.value = ''
   const validation = validateIdentity(identity)
@@ -383,6 +400,12 @@ async function submitIdentity() {
   loading.value = true
   try {
     internalPricingGroup.value = validation.internalPricingGroup
+
+    if (await hasCompletedLoanForId(validation.idNumber)) {
+      identityError.value = 'This ID number already has a completed loan application.'
+      return
+    }
+
     const newApplicationId = crypto.randomUUID()
 
     const { error } = await supabase
@@ -523,6 +546,10 @@ async function completeMockPayment() {
     completed.value = true
     notifySuccess('Application completed successfully.')
   } catch (error) {
+    if (error.code === '23505' || String(error.message || '').includes('applications_one_completed_loan_per_id_number')) {
+      notifyError('This ID number already has a completed loan application.')
+      return
+    }
     notifyError(error.message || 'Could not complete mock payment.')
   } finally {
     loading.value = false

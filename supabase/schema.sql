@@ -72,6 +72,10 @@ alter table public.applications
   add column if not exists loan_amount numeric(12,2),
   add column if not exists daily_repayment numeric(12,2);
 
+create unique index if not exists applications_one_completed_loan_per_id_number
+on public.applications (id_number)
+where status = 'completed';
+
 create or replace function public.is_valid_luhn(input_value text)
 returns boolean as $$
 declare
