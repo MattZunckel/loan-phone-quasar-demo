@@ -15,9 +15,9 @@ export function calculatePricing({ phone, pricing }) {
   const depositAmount = cashPrice * (depositPercent / 100)
   const loanPrincipal = cashPrice * (1 - depositPercent / 100)
 
-  // Placeholder formula. Replace this once you finalise your exact loan formula.
+  
   const loanAmount = loanPrincipal * (1 + annualInterestRate / 100)
-  const dailyRepayment = loanAmount / 365
+  const dailyRepayment = loanAmount / 360
   const totalCustomerCost = depositAmount + loanAmount
 
   return {
@@ -29,6 +29,6 @@ export function calculatePricing({ phone, pricing }) {
     loanAmount,
     dailyRepayment,
     totalCustomerCost,
-    termDays: 365
+    termDays: 360
   }
 }
